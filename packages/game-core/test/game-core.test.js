@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   advanceDay,
+  canCollectPayment,
+  collectPayment,
   createGame,
   generateProject,
   presentToCustomer
@@ -102,13 +104,14 @@ test("advanceDay can silently break an older working feature", () => {
   assert.ok(events.some((event) => event.type === "possible-regression"));
 });
 
-test("presentToCustomer checks reported features and pays only for working ones", () => {
+test("presentToCustomer checks reported features without collecting payment", () => {
   const game = {
     day: 3,
     cash: 0,
     developers: [],
     project: {
       status: "active",
+      potentialValue: 1500,
       features: [
         {
           id: "feature-1",
@@ -149,7 +152,54 @@ test("presentToCustomer checks reported features and pays only for working ones"
   assert.equal(result.checkedCount, 2);
   assert.equal(result.passedCount, 1);
   assert.equal(result.failedCount, 1);
-  assert.equal(result.earned, 300);
-  assert.equal(game.cash, 300);
+  assert.equal(game.cash, 0);
+  assert.equal(game.project.status, "active");
+  assert.equal(game.project.features[0].reportedDone, true);
+  assert.equal(game.project.features[1].reportedDone, false);
+});
+
+test("collectPayment is available only when all features are ready", () => {
+  const game = {
+    day: 5,
+    cash: 100,
+    developers: [],
+    project: {
+      status: "active",
+      potentialValue: 800,
+      features: [
+        {
+          id: "feature-1",
+          name: "Ready Feature",
+          complexity: 1,
+          customerValue: 300,
+          progress: 1,
+          reportedDone: true,
+          actuallyWorks: true
+        },
+        {
+          id: "feature-2",
+          name: "Not Ready Feature",
+          complexity: 1,
+          customerValue: 500,
+          progress: 1,
+          reportedDone: false,
+          actuallyWorks: true
+        }
+      ],
+      presentation: null,
+      payment: null
+    },
+    eventLog: []
+  };
+
+  assert.equal(canCollectPayment(game), false);
+  assert.throws(() => collectPayment(game), /all features are ready/);
+
+  game.project.features[1].reportedDone = true;
+  const { payment } = collectPayment(game);
+
+  assert.equal(payment.amount, 800);
+  assert.equal(game.cash, 900);
   assert.equal(game.project.status, "completed");
+  assert.equal(canCollectPayment(game), false);
 });

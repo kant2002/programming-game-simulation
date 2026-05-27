@@ -1,5 +1,7 @@
 import {
   advanceDay,
+  canCollectPayment,
+  collectPayment,
   createGame,
   getProjectSummary,
   presentToCustomer
@@ -46,7 +48,9 @@ function render() {
   const project = game.project;
   const summary = getProjectSummary(project);
   const presentation = project.presentation;
+  const payment = project.payment;
   const autoRunning = isAutoRunning();
+  const paymentAvailable = canCollectPayment(game);
 
   app.innerHTML = `
     <section class="hero">
@@ -70,6 +74,9 @@ function render() {
       ${autoRunning ? "" : `<button data-action="next-day" ${project.status !== "active" ? "disabled" : ""}>Следующий день</button>`}
       <button data-action="present" ${project.status !== "active" || summary.reportedDone === 0 ? "disabled" : ""}>
         Показать заказчику
+      </button>
+      <button data-action="collect-payment" ${paymentAvailable ? "" : "disabled"}>
+        Получить оплату
       </button>
       <label class="auto-control ${autoRunning ? "active" : ""}">
         <input
@@ -108,6 +115,7 @@ function render() {
           <span style="width: ${summary.progressPercent}%"></span>
         </div>
         ${presentation ? renderPresentation(presentation) : ""}
+        ${payment ? renderPayment(payment) : ""}
       </article>
 
       <article class="panel">
@@ -154,6 +162,11 @@ function render() {
     render();
   });
 
+  app.querySelector('[data-action="collect-payment"]').addEventListener("click", () => {
+    collectPayment(game);
+    render();
+  });
+
   app.querySelector('[data-action="auto-time"]').addEventListener("change", (event) => {
     if (event.target.checked) {
       startAutoTime();
@@ -177,10 +190,11 @@ function renderDeveloper(developer) {
 
 function renderFeature(feature) {
   const progressPercent = Math.round((feature.progress / feature.complexity) * 100);
-  const status = feature.reportedDone ? "Готово" : "В работе";
+  const needsFix = !feature.reportedDone && feature.progress >= feature.complexity;
+  const status = feature.reportedDone ? "Готово" : needsFix ? "Нужны исправления" : "В работе";
 
   return `
-    <article class="feature ${feature.reportedDone ? "done" : ""}">
+    <article class="feature ${feature.reportedDone ? "done" : ""} ${needsFix ? "needs-fix" : ""}">
       <div class="feature-header">
         <h3>${feature.name}</h3>
         <span>${status}</span>
@@ -202,7 +216,17 @@ function renderPresentation(presentation) {
         Прошло: ${presentation.passedCount}.
         Провалилось: ${presentation.failedCount}.
       </p>
-      <strong>Выплата: ${formatMoney(presentation.earned)}</strong>
+      <p>Ошибочные фичи возвращены в работу. Оплата доступна только когда все фичи готовы.</p>
+    </div>
+  `;
+}
+
+function renderPayment(payment) {
+  return `
+    <div class="payment">
+      <h3>Оплата получена</h3>
+      <p>День ${payment.day}</p>
+      <strong>${formatMoney(payment.amount)}</strong>
     </div>
   `;
 }

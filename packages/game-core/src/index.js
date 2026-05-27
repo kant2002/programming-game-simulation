@@ -100,7 +100,8 @@ export function generateProject(options = {}) {
     basePrice: Math.round(totalCustomerValue * 0.65),
     potentialValue: totalCustomerValue,
     features,
-    presentation: null
+    presentation: null,
+    payment: null
   };
 }
 
@@ -175,33 +176,67 @@ export function presentToCustomer(game, options = {}) {
     passed: feature.actuallyWorks,
     customerValue: feature.customerValue
   }));
-  const earned = sum(
-    checks
-      .filter((check) => check.passed)
-      .map((check) => check.customerValue)
-  );
   const failed = checks.filter((check) => !check.passed).length;
 
-  game.cash += earned;
-  game.project.status = "completed";
+  for (const check of checks) {
+    if (!check.passed) {
+      const feature = game.project.features.find((item) => item.id === check.featureId);
+      feature.reportedDone = false;
+    }
+  }
+
   game.project.presentation = {
     checkedCount: checks.length,
     passedCount: checks.length - failed,
     failedCount: failed,
-    earned,
     checks
   };
 
   const event = {
     type: "presentation",
-    message: `Заказчик проверил ${checks.length} фич: прошло ${checks.length - failed}, провалилось ${failed}. Выплата: ${earned}.`,
-    earned
+    message: `Заказчик проверил ${checks.length} фич: прошло ${checks.length - failed}, провалилось ${failed}. Ошибочные фичи возвращены в работу.`
   };
   game.eventLog.push(event);
 
   return {
     game,
     result: game.project.presentation,
+    events: [event]
+  };
+}
+
+export function canCollectPayment(game) {
+  return Boolean(
+    game?.project &&
+      game.project.status === "active" &&
+      game.project.features.length > 0 &&
+      game.project.features.every((feature) => feature.reportedDone)
+  );
+}
+
+export function collectPayment(game) {
+  if (!canCollectPayment(game)) {
+    throw new Error("Payment can be collected only when all features are ready.");
+  }
+
+  const amount = game.project.potentialValue;
+  game.cash += amount;
+  game.project.status = "completed";
+  game.project.payment = {
+    amount,
+    day: game.day
+  };
+
+  const event = {
+    type: "payment-collected",
+    amount,
+    message: `Проект принят полностью. Получена оплата: ${amount}.`
+  };
+  game.eventLog.push(event);
+
+  return {
+    game,
+    payment: game.project.payment,
     events: [event]
   };
 }
@@ -217,6 +252,7 @@ export function getProjectSummary(project) {
     visibleProgress,
     totalComplexity,
     progressPercent: totalComplexity === 0 ? 0 : Math.round((visibleProgress / totalComplexity) * 100),
+    allFeaturesReady: project.features.length > 0 && reportedDone === project.features.length,
     potentialValue: project.potentialValue
   };
 }
