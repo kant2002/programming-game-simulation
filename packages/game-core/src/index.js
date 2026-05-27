@@ -69,7 +69,7 @@ export function createGame(options = {}) {
   });
 
   return {
-    day: 1,
+    day: options.day ?? 1,
     cash: options.cash ?? 0,
     developers: cloneDevelopers(options.developers ?? DEFAULT_DEVELOPERS),
     project,

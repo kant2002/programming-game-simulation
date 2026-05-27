@@ -92,7 +92,7 @@ function render() {
             <dd>${summary.totalFeatures}</dd>
           </div>
           <div>
-            <dt>Готово по отчету</dt>
+            <dt>Готово</dt>
             <dd>${summary.reportedDone}</dd>
           </div>
           <div>
@@ -135,6 +135,7 @@ function render() {
 
   app.querySelector('[data-action="new-project"]').addEventListener("click", () => {
     game = createGame({
+      day: game.day,
       cash: game.cash
     });
     render();
@@ -176,7 +177,7 @@ function renderDeveloper(developer) {
 
 function renderFeature(feature) {
   const progressPercent = Math.round((feature.progress / feature.complexity) * 100);
-  const status = feature.reportedDone ? "Заявлено готово" : "В работе";
+  const status = feature.reportedDone ? "Готово" : "В работе";
 
   return `
     <article class="feature ${feature.reportedDone ? "done" : ""}">
@@ -207,7 +208,7 @@ function renderPresentation(presentation) {
 }
 
 function formatMoney(value) {
-  return new Intl.NumberFormat("ru-RU", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0
