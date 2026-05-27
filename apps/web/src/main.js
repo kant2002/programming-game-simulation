@@ -96,12 +96,8 @@ function render() {
         <h2>Проект</h2>
         <dl class="stats">
           <div>
-            <dt>Фич</dt>
-            <dd>${summary.totalFeatures}</dd>
-          </div>
-          <div>
-            <dt>Готово</dt>
-            <dd>${summary.reportedDone}</dd>
+            <dt>Фич / Готово</dt>
+            <dd>${summary.totalFeatures} / ${summary.reportedDone}</dd>
           </div>
           <div>
             <dt>Потенциал</dt>
