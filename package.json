@@ -1,0 +1,15 @@
+{
+  "name": "it-company-game",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @it-company-game/web run dev",
+    "test": "npm --workspace @it-company-game/game-core test",
+    "build": "npm --workspaces --if-present run build"
+  }
+}

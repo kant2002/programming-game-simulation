@@ -1,0 +1,368 @@
+const FEATURE_NOUNS = [
+  "Login",
+  "Dashboard",
+  "Notifications",
+  "Billing",
+  "Reports",
+  "Search",
+  "API",
+  "Import",
+  "Export",
+  "Permissions",
+  "Chat",
+  "Analytics",
+  "Mobile View",
+  "Audit Log",
+  "Settings",
+  "Onboarding",
+  "Calendar",
+  "Kanban Board",
+  "File Storage",
+  "Integrations"
+];
+
+const FEATURE_SUFFIXES = [
+  "MVP",
+  "V2",
+  "Admin Flow",
+  "Client Flow",
+  "Automation",
+  "Validation",
+  "Prototype",
+  "Integration"
+];
+
+export const DEFAULT_DEVELOPERS = [
+  {
+    id: "dev-1",
+    name: "Аня",
+    speed: 2.2,
+    reliability: 0.86,
+    regressionChance: 0.07
+  },
+  {
+    id: "dev-2",
+    name: "Борис",
+    speed: 1.7,
+    reliability: 0.78,
+    regressionChance: 0.11
+  }
+];
+
+export function createSeededRandom(seed = Date.now()) {
+  let value = hashSeed(seed);
+
+  return () => {
+    value |= 0;
+    value = (value + 0x6d2b79f5) | 0;
+    let result = Math.imul(value ^ (value >>> 15), 1 | value);
+    result = (result + Math.imul(result ^ (result >>> 7), 61 | result)) ^ result;
+    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function createGame(options = {}) {
+  const random = getRandom(options);
+  const project = generateProject({
+    random,
+    ...options.project
+  });
+
+  return {
+    day: 1,
+    cash: options.cash ?? 0,
+    developers: cloneDevelopers(options.developers ?? DEFAULT_DEVELOPERS),
+    project,
+    eventLog: [
+      {
+        type: "project-created",
+        message: `Получен проект "${project.name}" на ${project.features.length} фич.`
+      }
+    ],
+    _random: random
+  };
+}
+
+export function generateProject(options = {}) {
+  const random = options.random ?? Math.random;
+  const minFeatures = options.minFeatures ?? 12;
+  const maxFeatures = options.maxFeatures ?? 20;
+  const featureCount = options.featureCount ?? randomInt(random, minFeatures, maxFeatures);
+  const features = Array.from({ length: featureCount }, (_, index) =>
+    createFeature(index + 1, random)
+  );
+  const totalCustomerValue = sum(features.map((feature) => feature.customerValue));
+
+  return {
+    id: options.id ?? `project-${randomInt(random, 1000, 9999)}`,
+    name: options.name ?? createProjectName(random),
+    status: "active",
+    basePrice: Math.round(totalCustomerValue * 0.65),
+    potentialValue: totalCustomerValue,
+    features,
+    presentation: null
+  };
+}
+
+export function advanceDay(game, options = {}) {
+  assertActiveProject(game);
+
+  const random = getGameRandom(game, options);
+  const events = [];
+
+  for (const developer of game.developers) {
+    const feature = chooseFeatureForWork(game.project, options.featureId);
+
+    if (!feature) {
+      events.push({
+        type: "idle",
+        message: `${developer.name} не нашел доступных задач.`
+      });
+      continue;
+    }
+
+    const previousProgress = feature.progress;
+    const effort = roundToOne(developer.speed * randomFloat(random, 0.75, 1.25));
+    feature.progress = roundToOne(Math.min(feature.complexity, feature.progress + effort));
+
+    events.push({
+      type: "feature-progress",
+      developerId: developer.id,
+      featureId: feature.id,
+      progressAdded: roundToOne(feature.progress - previousProgress),
+      message: `${developer.name} работал над "${feature.name}".`
+    });
+
+    if (feature.progress >= feature.complexity && !feature.reportedDone) {
+      finishFeature(feature, developer, random);
+      events.push({
+        type: "feature-reported-done",
+        developerId: developer.id,
+        featureId: feature.id,
+        message: `${developer.name} отметил "${feature.name}" как готовую.`
+      });
+    }
+
+    const regression = maybeBreakExistingFeature(game.project, feature, developer, random);
+    if (regression) {
+      events.push({
+        type: "possible-regression",
+        developerId: developer.id,
+        featureId: regression.id,
+        message: `После изменений в проекте могла пострадать связанная функциональность. Команда этого не заметила.`
+      });
+    }
+  }
+
+  game.day += 1;
+  game.eventLog.push(...events);
+  return {
+    game,
+    events
+  };
+}
+
+export function presentToCustomer(game, options = {}) {
+  assertActiveProject(game);
+
+  const random = getGameRandom(game, options);
+  const readyFeatures = game.project.features.filter((feature) => feature.reportedDone);
+  const checkCount = Math.min(options.checkCount ?? 5, readyFeatures.length);
+  const checkedFeatures = shuffle([...readyFeatures], random).slice(0, checkCount);
+  const checks = checkedFeatures.map((feature) => ({
+    featureId: feature.id,
+    featureName: feature.name,
+    passed: feature.actuallyWorks,
+    customerValue: feature.customerValue
+  }));
+  const earned = sum(
+    checks
+      .filter((check) => check.passed)
+      .map((check) => check.customerValue)
+  );
+  const failed = checks.filter((check) => !check.passed).length;
+
+  game.cash += earned;
+  game.project.status = "completed";
+  game.project.presentation = {
+    checkedCount: checks.length,
+    passedCount: checks.length - failed,
+    failedCount: failed,
+    earned,
+    checks
+  };
+
+  const event = {
+    type: "presentation",
+    message: `Заказчик проверил ${checks.length} фич: прошло ${checks.length - failed}, провалилось ${failed}. Выплата: ${earned}.`,
+    earned
+  };
+  game.eventLog.push(event);
+
+  return {
+    game,
+    result: game.project.presentation,
+    events: [event]
+  };
+}
+
+export function getProjectSummary(project) {
+  const reportedDone = project.features.filter((feature) => feature.reportedDone).length;
+  const visibleProgress = sum(project.features.map((feature) => feature.progress));
+  const totalComplexity = sum(project.features.map((feature) => feature.complexity));
+
+  return {
+    totalFeatures: project.features.length,
+    reportedDone,
+    visibleProgress,
+    totalComplexity,
+    progressPercent: totalComplexity === 0 ? 0 : Math.round((visibleProgress / totalComplexity) * 100),
+    potentialValue: project.potentialValue
+  };
+}
+
+function createFeature(index, random) {
+  const complexity = randomInt(random, 3, 10);
+  const valueMultiplier = randomInt(random, 120, 240);
+
+  return {
+    id: `feature-${index}`,
+    name: `${pick(FEATURE_NOUNS, random)} ${pick(FEATURE_SUFFIXES, random)}`,
+    complexity,
+    customerValue: complexity * valueMultiplier,
+    progress: 0,
+    reportedDone: false,
+    actuallyWorks: false
+  };
+}
+
+function finishFeature(feature, developer, random) {
+  const complexityPenalty = Math.max(0, (feature.complexity - 5) * 0.015);
+  const successChance = clamp(developer.reliability - complexityPenalty, 0.1, 0.98);
+
+  feature.reportedDone = true;
+  feature.actuallyWorks = random() <= successChance;
+}
+
+function maybeBreakExistingFeature(project, currentFeature, developer, random) {
+  const candidates = project.features.filter(
+    (feature) => feature.id !== currentFeature.id && feature.reportedDone && feature.actuallyWorks
+  );
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const chance = clamp(developer.regressionChance + (1 - developer.reliability) * 0.04, 0, 0.6);
+  if (random() > chance) {
+    return null;
+  }
+
+  const brokenFeature = pick(candidates, random);
+  brokenFeature.actuallyWorks = false;
+  return brokenFeature;
+}
+
+function chooseFeatureForWork(project, forcedFeatureId) {
+  if (forcedFeatureId) {
+    const forced = project.features.find((feature) => feature.id === forcedFeatureId);
+    if (forced && !forced.reportedDone) {
+      return forced;
+    }
+  }
+
+  return project.features
+    .filter((feature) => !feature.reportedDone)
+    .sort((left, right) => {
+      if (left.progress !== right.progress) {
+        return right.progress - left.progress;
+      }
+
+      return left.complexity - right.complexity;
+    })[0];
+}
+
+function createProjectName(random) {
+  const clients = ["Retail", "Logistics", "Fintech", "Medtech", "Edtech", "Factory"];
+  const products = ["Portal", "Platform", "CRM", "Backoffice", "Marketplace", "Control Center"];
+  return `${pick(clients, random)} ${pick(products, random)}`;
+}
+
+function getRandom(options) {
+  if (options.random) {
+    return options.random;
+  }
+
+  if (options.seed !== undefined) {
+    return createSeededRandom(options.seed);
+  }
+
+  return Math.random;
+}
+
+function getGameRandom(game, options) {
+  if (options.random) {
+    return options.random;
+  }
+
+  if (game._random) {
+    return game._random;
+  }
+
+  return Math.random;
+}
+
+function assertActiveProject(game) {
+  if (!game?.project || game.project.status !== "active") {
+    throw new Error("Project is not active.");
+  }
+}
+
+function cloneDevelopers(developers) {
+  return developers.map((developer) => ({ ...developer }));
+}
+
+function hashSeed(seed) {
+  const text = String(seed);
+  let hash = 1779033703 ^ text.length;
+
+  for (let index = 0; index < text.length; index += 1) {
+    hash = Math.imul(hash ^ text.charCodeAt(index), 3432918353);
+    hash = (hash << 13) | (hash >>> 19);
+  }
+
+  return hash >>> 0;
+}
+
+function pick(items, random) {
+  return items[Math.floor(random() * items.length)];
+}
+
+function randomInt(random, min, max) {
+  return Math.floor(random() * (max - min + 1)) + min;
+}
+
+function randomFloat(random, min, max) {
+  return random() * (max - min) + min;
+}
+
+function roundToOne(value) {
+  return Math.round(value * 10) / 10;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function shuffle(items, random) {
+  for (let index = items.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [items[index], items[swapIndex]] = [items[swapIndex], items[index]];
+  }
+
+  return items;
+}
+
+function sum(values) {
+  return values.reduce((total, value) => total + value, 0);
+}
