@@ -71,7 +71,7 @@ function render() {
     </section>
 
     <section class="toolbar">
-      <button data-action="new-project">Сгенерировать проект</button>
+      <button data-action="new-project">Получить новый проект</button>
       ${autoRunning ? "" : `<button data-action="next-day" ${project.status !== "active" ? "disabled" : ""}>Следующий день</button>`}
       <button data-action="present" ${project.status !== "active" || summary.reportedDone === 0 ? "disabled" : ""}>
         Показать заказчику
