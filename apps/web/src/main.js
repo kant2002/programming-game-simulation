@@ -9,13 +9,44 @@ import "./styles.css";
 
 const app = document.querySelector("#app");
 let game = createGame();
+let autoTimerId = null;
 
 render();
+
+function isAutoRunning() {
+  return autoTimerId !== null;
+}
+
+function startAutoTime() {
+  if (isAutoRunning() || game.project.status !== "active") {
+    return;
+  }
+
+  autoTimerId = window.setInterval(() => {
+    if (game.project.status !== "active") {
+      render();
+      return;
+    }
+
+    advanceDay(game);
+    render();
+  }, 1000);
+}
+
+function stopAutoTime() {
+  if (autoTimerId === null) {
+    return;
+  }
+
+  window.clearInterval(autoTimerId);
+  autoTimerId = null;
+}
 
 function render() {
   const project = game.project;
   const summary = getProjectSummary(project);
   const presentation = project.presentation;
+  const autoRunning = isAutoRunning();
 
   app.innerHTML = `
     <section class="hero">
@@ -36,10 +67,20 @@ function render() {
 
     <section class="toolbar">
       <button data-action="new-project">Сгенерировать проект</button>
-      <button data-action="next-day" ${project.status !== "active" ? "disabled" : ""}>Следующий день</button>
+      ${autoRunning ? "" : `<button data-action="next-day" ${project.status !== "active" ? "disabled" : ""}>Следующий день</button>`}
       <button data-action="present" ${project.status !== "active" || summary.reportedDone === 0 ? "disabled" : ""}>
         Показать заказчику
       </button>
+      <label class="auto-control ${autoRunning ? "active" : ""}">
+        <input
+          type="checkbox"
+          data-action="auto-time"
+          ${autoRunning ? "checked" : ""}
+          ${project.status !== "active" ? "disabled" : ""}
+        />
+        <span>Автотечение времени</span>
+        <small>1 секунда = 1 день</small>
+      </label>
     </section>
 
     <section class="grid">
@@ -99,13 +140,26 @@ function render() {
     render();
   });
 
-  app.querySelector('[data-action="next-day"]').addEventListener("click", () => {
-    advanceDay(game);
-    render();
-  });
+  const nextDayButton = app.querySelector('[data-action="next-day"]');
+  if (nextDayButton) {
+    nextDayButton.addEventListener("click", () => {
+      advanceDay(game);
+      render();
+    });
+  }
 
   app.querySelector('[data-action="present"]').addEventListener("click", () => {
     presentToCustomer(game);
+    render();
+  });
+
+  app.querySelector('[data-action="auto-time"]').addEventListener("change", (event) => {
+    if (event.target.checked) {
+      startAutoTime();
+    } else {
+      stopAutoTime();
+    }
+
     render();
   });
 }

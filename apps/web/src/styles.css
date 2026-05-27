@@ -92,10 +92,46 @@ button:disabled {
 }
 
 .toolbar {
+  align-items: stretch;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.auto-control {
+  align-items: center;
+  background: white;
+  border: 1px solid #dfe6f2;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  padding: 0.75rem 1rem;
+}
+
+.auto-control.active {
+  background: #eefbf7;
+  border-color: #14b8a6;
+}
+
+.auto-control input {
+  accent-color: #14b8a6;
+  height: 18px;
+  width: 18px;
+}
+
+.auto-control span {
+  font-weight: 800;
+}
+
+.auto-control small {
+  color: #69758a;
+}
+
+.auto-control:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .grid {
