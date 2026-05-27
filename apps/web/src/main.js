@@ -13,6 +13,7 @@ const app = document.querySelector("#app");
 let game = createGame();
 let autoTimerId = null;
 
+startAutoTime();
 render();
 
 function isAutoRunning() {
