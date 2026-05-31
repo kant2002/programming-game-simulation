@@ -32,6 +32,38 @@ const FEATURE_SUFFIXES = [
   "Integration"
 ];
 
+const CUSTOMER_PREFIXES = [
+  "Northern",
+  "Bright",
+  "Global",
+  "Prime",
+  "Silver",
+  "Vertex",
+  "Atlas",
+  "Summit",
+  "Horizon",
+  "Metro",
+  "Apex",
+  "Civic"
+];
+
+const CUSTOMER_STEMS = [
+  "Logistics",
+  "Retail",
+  "Systems",
+  "Digital",
+  "Partners",
+  "Solutions",
+  "Industries",
+  "Commerce",
+  "Capital",
+  "Health",
+  "Energy",
+  "Media"
+];
+
+const CUSTOMER_SUFFIXES = ["LLC", "Group", "Inc", "Holdings", "Corp"];
+
 export const SALARY_PAYDAY_INTERVAL = 30;
 
 export const DEFAULT_DEVELOPERS = [
@@ -74,13 +106,13 @@ export function createGame(options = {}) {
 
   return {
     day: options.day ?? 1,
-    cash: options.cash ?? 0,
+    cash: options.cash ?? 20_000,
     developers: cloneDevelopers(options.developers ?? DEFAULT_DEVELOPERS),
     project,
     eventLog: [
       {
         type: "project-created",
-        message: `Получен проект "${project.name}" на ${project.features.length} фич.`
+        message: `Получен проект "${project.name}" от ${project.customer.companyName} на ${project.features.length} фич.`
       }
     ],
     _random: random
@@ -100,6 +132,9 @@ export function generateProject(options = {}) {
   return {
     id: options.id ?? `project-${randomInt(random, 1000, 9999)}`,
     name: options.name ?? createProjectName(random),
+    customer: {
+      companyName: options.customer?.companyName ?? createCustomerCompanyName(random)
+    },
     status: "active",
     basePrice: Math.round(totalCustomerValue * 0.65),
     potentialValue: totalCustomerValue,
@@ -202,9 +237,10 @@ export function presentToCustomer(game, options = {}) {
     checks
   };
 
+  const customerName = game.project.customer?.companyName ?? "Заказчик";
   const event = {
     type: "presentation",
-    message: `Заказчик проверил ${checks.length} фич: прошло ${checks.length - failed}, провалилось ${failed}. Ошибочные фичи возвращены в работу.`
+    message: `${customerName} проверил ${checks.length} фич: прошло ${checks.length - failed}, провалилось ${failed}. Ошибочные фичи возвращены в работу.`
   };
   game.eventLog.push(event);
 
@@ -332,6 +368,10 @@ function createProjectName(random) {
   const clients = ["Retail", "Logistics", "Fintech", "Medtech", "Edtech", "Factory"];
   const products = ["Portal", "Platform", "CRM", "Backoffice", "Marketplace", "Control Center"];
   return `${pick(clients, random)} ${pick(products, random)}`;
+}
+
+function createCustomerCompanyName(random) {
+  return `${pick(CUSTOMER_PREFIXES, random)} ${pick(CUSTOMER_STEMS, random)} ${pick(CUSTOMER_SUFFIXES, random)}`;
 }
 
 function getRandom(options) {

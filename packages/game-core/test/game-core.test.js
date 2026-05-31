@@ -19,6 +19,7 @@ test("generateProject creates features with complexity and customer value", () =
 
   assert.equal(project.features.length, 20);
   assert.equal(project.status, "active");
+  assert.ok(project.customer.companyName.length > 0);
   assert.ok(project.basePrice > 0);
   assert.ok(project.potentialValue >= project.basePrice);
 
@@ -29,6 +30,15 @@ test("generateProject creates features with complexity and customer value", () =
     assert.equal(feature.reportedDone, false);
     assert.equal(feature.actuallyWorks, false);
   }
+});
+
+test("generateProject creates a random customer company name", () => {
+  const project = generateProject({
+    random: () => 0,
+    featureCount: 1
+  });
+
+  assert.equal(project.customer.companyName, "Northern Logistics LLC");
 });
 
 test("advanceDay adds progress and marks completed features as reported done", () => {

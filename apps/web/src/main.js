@@ -59,7 +59,7 @@ function render() {
         <p class="eyebrow">Симулятор IT-компании</p>
         <h1>${project.name}</h1>
         <p class="lead">
-          Вам пришел проект с рынка. Команда делает фичи, но скрытые ошибки и регрессии
+          Вам пришел проект с рынка. Заказчик: <strong>${project.customer.companyName}</strong>. Команда делает фичи, но скрытые ошибки и регрессии
           проявятся только на демонстрации заказчику.
         </p>
       </div>
@@ -93,14 +93,14 @@ function render() {
 
     <section class="grid">
       <article class="panel">
-        <h2>Проект</h2>
+        <h2>${project.name} / ${project.customer.companyName}</h2>
         <dl class="stats">
           <div>
             <dt>Фич / Готово</dt>
             <dd>${summary.totalFeatures} / ${summary.reportedDone}</dd>
           </div>
           <div>
-            <dt>Потенциал</dt>
+            <dt>Контракт</dt>
             <dd>${formatMoney(summary.potentialValue)}</dd>
           </div>
           <div>
