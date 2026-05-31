@@ -40,7 +40,7 @@ test("generateProject creates a random customer company name", () => {
   });
 
   assert.equal(project.customer.companyName, "Northern Logistics LLC");
-  assert.equal(project.customer.relationship, 20);
+  assert.equal(project.customer.relationship, 100);
 });
 
 test("advanceDay adds progress and marks completed features as reported done", () => {
@@ -295,14 +295,13 @@ test("advanceDay ends project when customer relationship drops below zero", () =
 });
 
 test("getCustomerRelationshipLabel maps relationship levels to text", () => {
-  assert.equal(getCustomerRelationshipLabel(9), "ужасное");
+  assert.equal(getCustomerRelationshipLabel(20), "ужасное");
   assert.equal(getCustomerRelationshipLabel(0), "ужасное");
   assert.equal(getCustomerRelationshipLabel(-1), "ужасное");
-  assert.equal(getCustomerRelationshipLabel(10), "раздраженное");
-  assert.equal(getCustomerRelationshipLabel(19), "раздраженное");
-  assert.equal(getCustomerRelationshipLabel(20), "нейтральное");
-  assert.equal(getCustomerRelationshipLabel(59), "нейтральное");
-  assert.equal(getCustomerRelationshipLabel(60), "довольное");
-  assert.equal(getCustomerRelationshipLabel(74), "довольное");
-  assert.equal(getCustomerRelationshipLabel(75), "довольное");
+  assert.equal(getCustomerRelationshipLabel(21), "раздраженное");
+  assert.equal(getCustomerRelationshipLabel(60), "раздраженное");
+  assert.equal(getCustomerRelationshipLabel(61), "нейтральное");
+  assert.equal(getCustomerRelationshipLabel(100), "нейтральное");
+  assert.equal(getCustomerRelationshipLabel(101), "довольное");
+  assert.equal(getCustomerRelationshipLabel(120), "довольное");
 });
