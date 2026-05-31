@@ -288,6 +288,16 @@ button:disabled {
   margin-top: 8px;
 }
 
+.success-log {
+  color: #166534;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.success-log li + li {
+  margin-top: 8px;
+}
+
 @media (max-width: 760px) {
   .hero,
   .grid,

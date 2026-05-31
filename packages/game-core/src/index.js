@@ -65,6 +65,7 @@ const CUSTOMER_STEMS = [
 const CUSTOMER_SUFFIXES = ["LLC", "Group", "Inc", "Holdings", "Corp"];
 
 export const SALARY_PAYDAY_INTERVAL = 30;
+export const BUDGET_SNAPSHOT_INTERVAL = 360;
 export const DEFAULT_CUSTOMER_RELATIONSHIP = 100;
 
 export const DEFAULT_DEVELOPERS = [
@@ -116,6 +117,7 @@ export function createGame(options = {}) {
         message: `Получен проект "${project.name}" от ${project.customer.companyName} на ${project.features.length} фич.`
       }
     ],
+    successLog: options.successLog ? [...options.successLog] : [],
     _random: random
   };
 }
@@ -201,6 +203,10 @@ export function advanceDay(game, options = {}) {
   if (game.day % SALARY_PAYDAY_INTERVAL === 0) {
     const payrollEvent = paySalaries(game);
     events.push(payrollEvent);
+  }
+
+  if (game.day % BUDGET_SNAPSHOT_INTERVAL === 0) {
+    recordBudgetSnapshot(game);
   }
 
   decreaseCustomerRelationship(game);
@@ -432,6 +438,17 @@ function assertActiveProject(game) {
 
 function cloneDevelopers(developers) {
   return developers.map((developer) => ({ ...developer }));
+}
+
+function recordBudgetSnapshot(game) {
+  if (!game.successLog) {
+    game.successLog = [];
+  }
+
+  game.successLog.push({
+    day: game.day,
+    cash: game.cash
+  });
 }
 
 function paySalaries(game) {

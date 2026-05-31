@@ -141,12 +141,15 @@ function render() {
         ${game.eventLog.slice(-12).reverse().map((event) => `<li>${event.message}</li>`).join("")}
       </ol>
     </section>
+
+    ${game.successLog?.length ? renderSuccessLog(game.successLog) : ""}
   `;
 
   app.querySelector('[data-action="new-project"]').addEventListener("click", () => {
     game = createGame({
       day: game.day,
-      cash: game.cash
+      cash: game.cash,
+      successLog: game.successLog
     });
     render();
   });
@@ -230,6 +233,21 @@ function renderPresentation(presentation) {
       </p>
       <p>Ошибочные фичи возвращены в работу. Оплата доступна только когда все фичи готовы.</p>
     </div>
+  `;
+}
+
+function renderSuccessLog(successLog) {
+  return `
+    <section class="panel">
+      <h2>Лог успехов</h2>
+      <ol class="success-log">
+        ${successLog
+          .slice()
+          .reverse()
+          .map((entry) => `<li>День ${entry.day}: ${formatMoney(entry.cash)}</li>`)
+          .join("")}
+      </ol>
+    </section>
   `;
 }
 

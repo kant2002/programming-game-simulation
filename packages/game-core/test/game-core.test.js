@@ -220,6 +220,39 @@ test("collectPayment is available only when all features are ready", () => {
   assert.equal(canCollectPayment(game), false);
 });
 
+test("advanceDay records company budget in success log every 360 days", () => {
+  const game = createGame({
+    seed: "budget-snapshot",
+    cash: 15000,
+    day: 359,
+    project: {
+      featureCount: 1
+    },
+    developers: [
+      {
+        id: "dev-1",
+        name: "Dev",
+        speed: 0,
+        reliability: 1,
+        regressionChance: 0,
+        salary: 0
+      }
+    ]
+  });
+
+  assert.deepEqual(game.successLog, []);
+
+  advanceDay(game);
+
+  assert.equal(game.day, 360);
+  assert.deepEqual(game.successLog, [{ day: 360, cash: 15000 }]);
+
+  advanceDay(game);
+
+  assert.equal(game.day, 361);
+  assert.deepEqual(game.successLog, [{ day: 360, cash: 15000 }]);
+});
+
 test("advanceDay deducts developer salaries every 30 days", () => {
   const game = createGame({
     seed: "payroll",
