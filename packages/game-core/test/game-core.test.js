@@ -244,7 +244,7 @@ test("createGame stores company settings and preserves them across new projects"
     makeInternalSpecification: false
   });
   assert.deepEqual(DEFAULT_COMPANY_SETTINGS, {
-    makeInternalSpecification: true
+    makeInternalSpecification: false
   });
 });
 
