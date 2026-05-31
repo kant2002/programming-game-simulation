@@ -22,16 +22,11 @@ function isAutoRunning() {
 }
 
 function startAutoTime() {
-  if (isAutoRunning() || game.project.status !== "active") {
+  if (isAutoRunning()) {
     return;
   }
 
   autoTimerId = window.setInterval(() => {
-    if (game.project.status !== "active") {
-      render();
-      return;
-    }
-
     advanceDay(game);
     render();
   }, 1000);
@@ -73,7 +68,7 @@ function render() {
 
     <section class="toolbar">
       <button data-action="new-project">Найти новый проект</button>
-      ${autoRunning ? "" : `<button data-action="next-day" ${project.status !== "active" ? "disabled" : ""}>Следующий день</button>`}
+      ${autoRunning ? "" : `<button data-action="next-day">Следующий день</button>`}
       <button data-action="present" ${project.status !== "active" || summary.reportedDone === 0 ? "disabled" : ""}>
         Показать заказчику
       </button>
@@ -85,7 +80,6 @@ function render() {
           type="checkbox"
           data-action="auto-time"
           ${autoRunning ? "checked" : ""}
-          ${project.status !== "active" ? "disabled" : ""}
         />
         <span>Автотечение времени</span>
         <small>1 секунда = 1 день</small>

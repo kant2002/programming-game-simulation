@@ -271,6 +271,38 @@ test("advanceDay records company budget in success log every 360 days", () => {
   assert.deepEqual(game.successLog, [{ day: 360, cash: 15000 }]);
 });
 
+test("advanceDay advances time and pays salaries without an active project", () => {
+  const game = createGame({
+    cash: 10000,
+    day: 29,
+    project: {
+      featureCount: 1
+    },
+    developers: [
+      {
+        id: "dev-1",
+        name: "Dev",
+        speed: 0,
+        reliability: 1,
+        regressionChance: 0,
+        salary: 1500
+      }
+    ]
+  });
+
+  game.project.status = "completed";
+  game.project.customer.relationship = 50;
+
+  const { events } = advanceDay(game);
+
+  assert.equal(game.day, 30);
+  assert.equal(game.cash, 8500);
+  assert.equal(game.project.status, "completed");
+  assert.equal(game.project.customer.relationship, 50);
+  assert.ok(events.some((event) => event.type === "salary-paid"));
+  assert.equal(events.some((event) => event.type === "feature-progress"), false);
+});
+
 test("advanceDay deducts developer salaries every 30 days", () => {
   const game = createGame({
     seed: "payroll",

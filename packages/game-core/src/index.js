@@ -179,52 +179,53 @@ export function generateProject(options = {}) {
 }
 
 export function advanceDay(game, options = {}) {
-  assertActiveProject(game);
-
   const random = getGameRandom(game, options);
   const events = [];
+  const hasActiveProject = isActiveProject(game);
 
-  for (const developer of game.developers) {
-    const feature = chooseFeatureForWork(game.project, options.featureId);
+  if (hasActiveProject) {
+    for (const developer of game.developers) {
+      const feature = chooseFeatureForWork(game.project, options.featureId);
 
-    if (!feature) {
+      if (!feature) {
+        events.push({
+          type: "idle",
+          message: `${developer.name} не нашел доступных задач.`
+        });
+        continue;
+      }
+
+      const previousProgress = feature.progress;
+      const effort = roundToOne(developer.speed * randomFloat(random, 0.75, 1.25));
+      feature.progress = roundToOne(Math.min(feature.complexity, feature.progress + effort));
+
       events.push({
-        type: "idle",
-        message: `${developer.name} не нашел доступных задач.`
-      });
-      continue;
-    }
-
-    const previousProgress = feature.progress;
-    const effort = roundToOne(developer.speed * randomFloat(random, 0.75, 1.25));
-    feature.progress = roundToOne(Math.min(feature.complexity, feature.progress + effort));
-
-    events.push({
-      type: "feature-progress",
-      developerId: developer.id,
-      featureId: feature.id,
-      progressAdded: roundToOne(feature.progress - previousProgress),
-      message: `${developer.name} работал над "${feature.name}".`
-    });
-
-    if (feature.progress >= feature.complexity && !feature.reportedDone) {
-      finishFeature(feature, developer, random);
-      events.push({
-        type: "feature-reported-done",
+        type: "feature-progress",
         developerId: developer.id,
         featureId: feature.id,
-        message: `${developer.name} отметил "${feature.name}" как готовую.`
+        progressAdded: roundToOne(feature.progress - previousProgress),
+        message: `${developer.name} работал над "${feature.name}".`
       });
-    }
 
-    const regression = maybeBreakExistingFeature(game.project, feature, developer, random);
-    if (regression) {
-      events.push({
-        type: "possible-regression",
-        developerId: developer.id,
-        featureId: regression.id,
-        message: `После изменений в проекте могла пострадать связанная функциональность. Команда этого не заметила.`
-      });
+      if (feature.progress >= feature.complexity && !feature.reportedDone) {
+        finishFeature(feature, developer, random);
+        events.push({
+          type: "feature-reported-done",
+          developerId: developer.id,
+          featureId: feature.id,
+          message: `${developer.name} отметил "${feature.name}" как готовую.`
+        });
+      }
+
+      const regression = maybeBreakExistingFeature(game.project, feature, developer, random);
+      if (regression) {
+        events.push({
+          type: "possible-regression",
+          developerId: developer.id,
+          featureId: regression.id,
+          message: `После изменений в проекте могла пострадать связанная функциональность. Команда этого не заметила.`
+        });
+      }
     }
   }
 
@@ -239,10 +240,12 @@ export function advanceDay(game, options = {}) {
     recordBudgetSnapshot(game);
   }
 
-  decreaseCustomerRelationship(game);
+  if (hasActiveProject) {
+    decreaseCustomerRelationship(game);
 
-  if (game.project.customer.relationship < 0) {
-    events.push(failProjectDueToRelationship(game));
+    if (game.project.customer.relationship < 0) {
+      events.push(failProjectDueToRelationship(game));
+    }
   }
 
   game.eventLog.push(...events);
@@ -458,6 +461,10 @@ function getGameRandom(game, options) {
   }
 
   return Math.random;
+}
+
+function isActiveProject(game) {
+  return Boolean(game?.project && game.project.status === "active");
 }
 
 function assertActiveProject(game) {
