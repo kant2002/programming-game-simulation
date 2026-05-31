@@ -96,6 +96,10 @@ function render() {
         <h2>${project.name} / ${project.customer.companyName}</h2>
         <dl class="stats">
           <div>
+            <dt title="Отношение к вашей компании: ${summary.customerRelationshipValue}">Отношение</dt>
+            <dd title="Отношение к вашей компании: \nужасное - клиент готов разорвать контракт\nраздраженное - клиент раздражен вашей компанией\nнейтральное - клиент нейтрален к вашей компании\nдовольное - клиент доволен работой с вами">${summary.customerRelationship}</dd>
+          </div>
+          <div>
             <dt>Фич / Готово</dt>
             <dd>${summary.totalFeatures} / ${summary.reportedDone}</dd>
           </div>
@@ -112,6 +116,7 @@ function render() {
           <span style="width: ${summary.progressPercent}%"></span>
         </div>
         ${presentation ? renderPresentation(presentation) : ""}
+        ${project.status === "failed" ? renderProjectFailed() : ""}
         ${payment ? renderPayment(payment) : ""}
       </article>
 
@@ -202,6 +207,15 @@ function renderFeature(feature) {
         <span style="width: ${progressPercent}%"></span>
       </div>
     </article>
+  `;
+}
+
+function renderProjectFailed() {
+  return `
+    <div class="presentation">
+      <h3>Контракт расторгнут</h3>
+      <p>Заказчик потерял терпение. Оплата не будет выплачена.</p>
+    </div>
   `;
 }
 

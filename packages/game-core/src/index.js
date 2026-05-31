@@ -65,6 +65,7 @@ const CUSTOMER_STEMS = [
 const CUSTOMER_SUFFIXES = ["LLC", "Group", "Inc", "Holdings", "Corp"];
 
 export const SALARY_PAYDAY_INTERVAL = 30;
+export const DEFAULT_CUSTOMER_RELATIONSHIP = 100;
 
 export const DEFAULT_DEVELOPERS = [
   {
@@ -133,7 +134,8 @@ export function generateProject(options = {}) {
     id: options.id ?? `project-${randomInt(random, 1000, 9999)}`,
     name: options.name ?? createProjectName(random),
     customer: {
-      companyName: options.customer?.companyName ?? createCustomerCompanyName(random)
+      companyName: options.customer?.companyName ?? createCustomerCompanyName(random),
+      relationship: options.customer?.relationship ?? DEFAULT_CUSTOMER_RELATIONSHIP
     },
     status: "active",
     basePrice: Math.round(totalCustomerValue * 0.65),
@@ -199,6 +201,12 @@ export function advanceDay(game, options = {}) {
   if (game.day % SALARY_PAYDAY_INTERVAL === 0) {
     const payrollEvent = paySalaries(game);
     events.push(payrollEvent);
+  }
+
+  decreaseCustomerRelationship(game);
+
+  if (game.project.customer.relationship < 0) {
+    events.push(failProjectDueToRelationship(game));
   }
 
   game.eventLog.push(...events);
@@ -287,6 +295,22 @@ export function collectPayment(game) {
   };
 }
 
+export function getCustomerRelationshipLabel(relationship) {
+  if (relationship <= 20) {
+    return "ужасное";
+  }
+
+  if (relationship <= 60) {
+    return "раздраженное";
+  }
+
+  if (relationship <= 100) {
+    return "нейтральное";
+  }
+
+  return "довольное";
+}
+
 export function getProjectSummary(project) {
   const reportedDone = project.features.filter((feature) => feature.reportedDone).length;
   const visibleProgress = sum(project.features.map((feature) => feature.progress));
@@ -299,7 +323,9 @@ export function getProjectSummary(project) {
     totalComplexity,
     progressPercent: totalComplexity === 0 ? 0 : Math.round((visibleProgress / totalComplexity) * 100),
     allFeaturesReady: project.features.length > 0 && reportedDone === project.features.length,
-    potentialValue: project.potentialValue
+    potentialValue: project.potentialValue,
+    customerRelationship: getCustomerRelationshipLabel(project.customer.relationship),
+    customerRelationshipValue: project.customer.relationship
   };
 }
 
@@ -424,6 +450,22 @@ function paySalaries(game) {
     total,
     payments,
     message: `Выплачена зарплата команде: ${total}.`
+  };
+}
+
+function decreaseCustomerRelationship(game) {
+  game.project.customer.relationship -= 1;
+}
+
+function failProjectDueToRelationship(game) {
+  const customerName = game.project.customer.companyName;
+
+  game.project.status = "failed";
+  game.project.payment = null;
+
+  return {
+    type: "project-failed",
+    message: `${customerName} разорвал контракт. Отношение упало ниже нуля — оплата не выплачивается.`
   };
 }
 

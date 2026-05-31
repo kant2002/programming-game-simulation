@@ -7,6 +7,7 @@ import {
   collectPayment,
   createGame,
   generateProject,
+  getCustomerRelationshipLabel,
   presentToCustomer
 } from "../src/index.js";
 
@@ -39,6 +40,7 @@ test("generateProject creates a random customer company name", () => {
   });
 
   assert.equal(project.customer.companyName, "Northern Logistics LLC");
+  assert.equal(project.customer.relationship, 20);
 });
 
 test("advanceDay adds progress and marks completed features as reported done", () => {
@@ -82,6 +84,10 @@ test("advanceDay can silently break an older working feature", () => {
     ],
     project: {
       status: "active",
+      customer: {
+        companyName: "Test Corp",
+        relationship: 20
+      },
       features: [
         {
           id: "feature-1",
@@ -251,4 +257,52 @@ test("advanceDay deducts developer salaries every 30 days", () => {
   advanceDay(game);
   assert.equal(game.day, 31);
   assert.equal(game.cash, 7300);
+});
+
+test("advanceDay ends project when customer relationship drops below zero", () => {
+  const game = createGame({
+    project: {
+      featureCount: 1,
+      customer: {
+        companyName: "Test Corp",
+        relationship: 1
+      }
+    },
+    developers: [
+      {
+        id: "dev-1",
+        name: "Dev",
+        speed: 0,
+        reliability: 1,
+        regressionChance: 0,
+        salary: 0
+      }
+    ]
+  });
+
+  advanceDay(game);
+
+  assert.equal(game.project.customer.relationship, 0);
+  assert.equal(game.project.status, "active");
+
+  const { events } = advanceDay(game);
+
+  assert.equal(game.project.customer.relationship, -1);
+  assert.equal(game.project.status, "failed");
+  assert.equal(game.project.payment, null);
+  assert.equal(canCollectPayment(game), false);
+  assert.ok(events.some((event) => event.type === "project-failed"));
+});
+
+test("getCustomerRelationshipLabel maps relationship levels to text", () => {
+  assert.equal(getCustomerRelationshipLabel(9), "ужасное");
+  assert.equal(getCustomerRelationshipLabel(0), "ужасное");
+  assert.equal(getCustomerRelationshipLabel(-1), "ужасное");
+  assert.equal(getCustomerRelationshipLabel(10), "раздраженное");
+  assert.equal(getCustomerRelationshipLabel(19), "раздраженное");
+  assert.equal(getCustomerRelationshipLabel(20), "нейтральное");
+  assert.equal(getCustomerRelationshipLabel(59), "нейтральное");
+  assert.equal(getCustomerRelationshipLabel(60), "довольное");
+  assert.equal(getCustomerRelationshipLabel(74), "довольное");
+  assert.equal(getCustomerRelationshipLabel(75), "довольное");
 });
