@@ -6,8 +6,10 @@ import {
   canCollectPayment,
   collectPayment,
   createGame,
+  formatGameDay,
   generateProject,
   getCustomerRelationshipLabel,
+  parseGameDay,
   presentToCustomer
 } from "../src/index.js";
 
@@ -218,6 +220,22 @@ test("collectPayment is available only when all features are ready", () => {
   assert.equal(game.cash, 900);
   assert.equal(game.project.status, "completed");
   assert.equal(canCollectPayment(game), false);
+});
+
+test("parseGameDay converts absolute days into year, month, and day", () => {
+  assert.deepEqual(parseGameDay(1), { year: 1, month: 1, day: 1 });
+  assert.deepEqual(parseGameDay(30), { year: 1, month: 1, day: 30 });
+  assert.deepEqual(parseGameDay(31), { year: 1, month: 2, day: 1 });
+  assert.deepEqual(parseGameDay(360), { year: 1, month: 12, day: 30 });
+  assert.deepEqual(parseGameDay(361), { year: 2, month: 1, day: 1 });
+});
+
+test("formatGameDay omits year and month labels for early game dates", () => {
+  assert.equal(formatGameDay(1), "День 1");
+  assert.equal(formatGameDay(15), "День 15");
+  assert.equal(formatGameDay(31), "Месяц 2, День 1");
+  assert.equal(formatGameDay(360), "Месяц 12, День 30");
+  assert.equal(formatGameDay(361), "Год 2, Месяц 1, День 1");
 });
 
 test("advanceDay records company budget in success log every 360 days", () => {

@@ -3,6 +3,7 @@ import {
   canCollectPayment,
   collectPayment,
   createGame,
+  formatGameDay,
   getProjectSummary,
   presentToCustomer
 } from "@it-company-game/game-core";
@@ -64,7 +65,7 @@ function render() {
         </p>
       </div>
       <div class="cash-card">
-        <span>День ${game.day}</span>
+        <span>${formatGameDay(game.day)}</span>
         <strong>${formatMoney(game.cash)}</strong>
         <small>деньги компании</small>
       </div>
@@ -244,7 +245,7 @@ function renderSuccessLog(successLog) {
         ${successLog
           .slice()
           .reverse()
-          .map((entry) => `<li>День ${entry.day}: ${formatMoney(entry.cash)}</li>`)
+          .map((entry) => `<li>${formatGameDay(entry.day)}: ${formatMoney(entry.cash)}</li>`)
           .join("")}
       </ol>
     </section>
@@ -255,7 +256,7 @@ function renderPayment(payment) {
   return `
     <div class="payment">
       <h3>Оплата получена</h3>
-      <p>День ${payment.day}</p>
+      <p>${formatGameDay(payment.day)}</p>
       <strong>${formatMoney(payment.amount)}</strong>
     </div>
   `;

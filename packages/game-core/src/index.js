@@ -66,7 +66,37 @@ const CUSTOMER_SUFFIXES = ["LLC", "Group", "Inc", "Holdings", "Corp"];
 
 export const SALARY_PAYDAY_INTERVAL = 30;
 export const BUDGET_SNAPSHOT_INTERVAL = 360;
+export const DAYS_PER_MONTH = 30;
+export const DAYS_PER_YEAR = 360;
 export const DEFAULT_CUSTOMER_RELATIONSHIP = 100;
+
+export function parseGameDay(day) {
+  const dayIndex = day - 1;
+  const dayInYear = dayIndex % DAYS_PER_YEAR;
+  const year = Math.floor(dayIndex / DAYS_PER_YEAR) + 1;
+  const month = Math.floor(dayInYear / DAYS_PER_MONTH) + 1;
+  const dayOfMonth = (dayInYear % DAYS_PER_MONTH) + 1;
+
+  return {
+    year,
+    month,
+    day: dayOfMonth
+  };
+}
+
+export function formatGameDay(day) {
+  const { year, month, day: dayOfMonth } = parseGameDay(day);
+
+  if (year !== 1) {
+    return `Год ${year}, Месяц ${month}, День ${dayOfMonth}`;
+  }
+
+  if (month !== 1) {
+    return `Месяц ${month}, День ${dayOfMonth}`;
+  }
+
+  return `День ${dayOfMonth}`;
+}
 
 export const DEFAULT_DEVELOPERS = [
   {
