@@ -6,6 +6,7 @@ import {
   canCollectPayment,
   collectPayment,
   createGame,
+  DEFAULT_COMPANY_SETTINGS,
   formatGameDay,
   generateProject,
   getCustomerRelationshipLabel,
@@ -220,6 +221,31 @@ test("collectPayment is available only when all features are ready", () => {
   assert.equal(game.cash, 900);
   assert.equal(game.project.status, "completed");
   assert.equal(canCollectPayment(game), false);
+});
+
+test("createGame stores company settings and preserves them across new projects", () => {
+  const game = createGame({
+    companySettings: {
+      makeInternalSpecification: false
+    }
+  });
+
+  assert.deepEqual(game.companySettings, {
+    makeInternalSpecification: false
+  });
+
+  const nextGame = createGame({
+    day: game.day,
+    cash: game.cash,
+    companySettings: game.companySettings
+  });
+
+  assert.deepEqual(nextGame.companySettings, {
+    makeInternalSpecification: false
+  });
+  assert.deepEqual(DEFAULT_COMPANY_SETTINGS, {
+    makeInternalSpecification: true
+  });
 });
 
 test("parseGameDay converts absolute days into year, month, and day", () => {

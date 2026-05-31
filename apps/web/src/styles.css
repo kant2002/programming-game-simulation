@@ -298,6 +298,99 @@ button:disabled {
   margin-top: 8px;
 }
 
+.company-settings-panel {
+  margin-bottom: 20px;
+}
+
+.company-settings-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.company-settings-header h2 {
+  margin: 0;
+}
+
+.company-settings-header button {
+  background: #eef2ff;
+  color: #1d4ed8;
+}
+
+.company-settings-summary {
+  color: #69758a;
+  margin: 12px 0 0;
+}
+
+.dialog-backdrop {
+  align-items: center;
+  background: rgb(21 32 51 / 45%);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 100;
+}
+
+.settings-dialog {
+  background: white;
+  border: 1px solid #dfe6f2;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgb(21 32 51 / 18%);
+  max-width: 480px;
+  padding: 22px;
+  width: 100%;
+}
+
+.settings-dialog-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.settings-dialog-header h2 {
+  margin: 0;
+}
+
+.dialog-close {
+  background: #f6f8fc;
+  border-radius: 999px;
+  color: #526179;
+  font-size: 1.4rem;
+  height: 36px;
+  line-height: 1;
+  padding: 0;
+  width: 36px;
+}
+
+.settings-option {
+  align-items: start;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+}
+
+.settings-option input {
+  accent-color: #2563eb;
+  height: 18px;
+  margin-top: 2px;
+  width: 18px;
+}
+
+.settings-option strong {
+  display: block;
+}
+
+.settings-option small {
+  color: #69758a;
+  display: block;
+  margin-top: 4px;
+}
+
 @media (max-width: 760px) {
   .hero,
   .grid,

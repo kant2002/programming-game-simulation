@@ -70,6 +70,10 @@ export const DAYS_PER_MONTH = 30;
 export const DAYS_PER_YEAR = 360;
 export const DEFAULT_CUSTOMER_RELATIONSHIP = 100;
 
+export const DEFAULT_COMPANY_SETTINGS = {
+  makeInternalSpecification: false
+};
+
 export function parseGameDay(day) {
   const dayIndex = day - 1;
   const dayInYear = dayIndex % DAYS_PER_YEAR;
@@ -148,6 +152,7 @@ export function createGame(options = {}) {
       }
     ],
     successLog: options.successLog ? [...options.successLog] : [],
+    companySettings: normalizeCompanySettings(options.companySettings),
     _random: random
   };
 }
@@ -471,6 +476,13 @@ function assertActiveProject(game) {
   if (!game?.project || game.project.status !== "active") {
     throw new Error("Project is not active.");
   }
+}
+
+function normalizeCompanySettings(settings) {
+  return {
+    makeInternalSpecification:
+      settings?.makeInternalSpecification ?? DEFAULT_COMPANY_SETTINGS.makeInternalSpecification
+  };
 }
 
 function cloneDevelopers(developers) {

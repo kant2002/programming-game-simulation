@@ -13,6 +13,7 @@ import "./styles.css";
 const app = document.querySelector("#app");
 let game = createGame();
 let autoTimerId = null;
+let isSettingsDialogOpen = false;
 
 startAutoTime();
 render();
@@ -48,6 +49,7 @@ function render() {
   const payment = project.payment;
   const autoRunning = isAutoRunning();
   const paymentAvailable = canCollectPayment(game);
+  const showRequirements = game.companySettings.makeInternalSpecification;
 
   app.innerHTML = `
     <section class="hero">
@@ -84,6 +86,13 @@ function render() {
         <span>Автотечение времени</span>
         <small>1 секунда = 1 день</small>
       </label>
+    </section>
+
+    <section class="panel company-settings-panel">
+      <div class="company-settings-header">
+        <h2>Настройки компании</h2>
+        <button type="button" data-action="open-settings">Открыть</button>
+      </div>
     </section>
 
     <section class="grid">
@@ -123,28 +132,37 @@ function render() {
       </article>
     </section>
 
+    ${
+      showRequirements
+        ? `
     <section class="panel">
       <h2>Требования</h2>
       <div class="features">
         ${project.features.map(renderFeature).join("")}
       </div>
     </section>
+    `
+        : ""
+    }
 
     <section class="panel">
-      <h2>Журнал</h2>
+      <h2 title="Журнал событий которые произошли на проекте">Журнал проекта</h2>
       <ol class="event-log">
         ${game.eventLog.slice(-12).reverse().map((event) => `<li>${event.message}</li>`).join("")}
       </ol>
     </section>
 
     ${game.successLog?.length ? renderSuccessLog(game.successLog) : ""}
+
+    ${isSettingsDialogOpen ? renderSettingsDialog(game.companySettings) : ""}
   `;
 
   app.querySelector('[data-action="new-project"]').addEventListener("click", () => {
     game = createGame({
       day: game.day,
       cash: game.cash,
-      successLog: game.successLog
+      successLog: game.successLog,
+      companySettings: game.companySettings
     });
     render();
   });
@@ -167,6 +185,37 @@ function render() {
     render();
   });
 
+  app.querySelector('[data-action="open-settings"]').addEventListener("click", () => {
+    isSettingsDialogOpen = true;
+    render();
+  });
+
+  const settingsBackdrop = app.querySelector(".dialog-backdrop");
+  if (settingsBackdrop) {
+    settingsBackdrop.addEventListener("click", () => {
+      isSettingsDialogOpen = false;
+      render();
+    });
+
+    const settingsDialog = settingsBackdrop.querySelector('[data-action="settings-dialog"]');
+    settingsDialog.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
+    settingsBackdrop.querySelector('[data-action="close-settings"]').addEventListener("click", (event) => {
+      event.stopPropagation();
+      isSettingsDialogOpen = false;
+      render();
+    });
+
+    settingsDialog
+      .querySelector('[data-setting="make-internal-specification"]')
+      .addEventListener("change", (event) => {
+        game.companySettings.makeInternalSpecification = event.target.checked;
+        render();
+      });
+  }
+
   app.querySelector('[data-action="auto-time"]').addEventListener("change", (event) => {
     if (event.target.checked) {
       startAutoTime();
@@ -176,6 +225,30 @@ function render() {
 
     render();
   });
+}
+
+function renderSettingsDialog(companySettings) {
+  return `
+    <div class="dialog-backdrop" data-action="close-settings">
+      <div class="settings-dialog" data-action="settings-dialog" role="dialog" aria-labelledby="settings-dialog-title">
+        <div class="settings-dialog-header">
+          <h2 id="settings-dialog-title">Настройки компании</h2>
+          <button type="button" class="dialog-close" data-action="close-settings" aria-label="Закрыть">×</button>
+        </div>
+        <label class="settings-option">
+          <input
+            type="checkbox"
+            data-setting="make-internal-specification"
+            ${companySettings.makeInternalSpecification ? "checked" : ""}
+          />
+          <span>
+            <strong>Делать внутреннюю спецификацию</strong>
+            <small>Команда ведёт список требований по проекту.</small>
+          </span>
+        </label>
+      </div>
+    </div>
+  `;
 }
 
 function renderDeveloper(developer) {
