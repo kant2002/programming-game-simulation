@@ -203,3 +203,42 @@ test("collectPayment is available only when all features are ready", () => {
   assert.equal(game.project.status, "completed");
   assert.equal(canCollectPayment(game), false);
 });
+
+test("advanceDay deducts developer salaries every 30 days", () => {
+  const game = createGame({
+    seed: "payroll",
+    cash: 10000,
+    day: 29,
+    project: {
+      featureCount: 1
+    },
+    developers: [
+      {
+        id: "dev-1",
+        name: "Аня",
+        speed: 1,
+        reliability: 1,
+        regressionChance: 0,
+        salary: 1500
+      },
+      {
+        id: "dev-2",
+        name: "Борис",
+        speed: 1,
+        reliability: 1,
+        regressionChance: 0,
+        salary: 1200
+      }
+    ]
+  });
+
+  const { events } = advanceDay(game);
+
+  assert.equal(game.day, 30);
+  assert.equal(game.cash, 7300);
+  assert.ok(events.some((event) => event.type === "salary-paid" && event.total === 2700));
+
+  advanceDay(game);
+  assert.equal(game.day, 31);
+  assert.equal(game.cash, 7300);
+});

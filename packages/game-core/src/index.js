@@ -32,20 +32,24 @@ const FEATURE_SUFFIXES = [
   "Integration"
 ];
 
+export const SALARY_PAYDAY_INTERVAL = 30;
+
 export const DEFAULT_DEVELOPERS = [
   {
     id: "dev-1",
     name: "Аня",
     speed: 2.2,
     reliability: 0.86,
-    regressionChance: 0.07
+    regressionChance: 0.07,
+    salary: 1500
   },
   {
     id: "dev-2",
     name: "Борис",
     speed: 1.7,
     reliability: 0.78,
-    regressionChance: 0.11
+    regressionChance: 0.11,
+    salary: 1200
   }
 ];
 
@@ -156,6 +160,12 @@ export function advanceDay(game, options = {}) {
   }
 
   game.day += 1;
+
+  if (game.day % SALARY_PAYDAY_INTERVAL === 0) {
+    const payrollEvent = paySalaries(game);
+    events.push(payrollEvent);
+  }
+
   game.eventLog.push(...events);
   return {
     game,
@@ -356,6 +366,25 @@ function assertActiveProject(game) {
 
 function cloneDevelopers(developers) {
   return developers.map((developer) => ({ ...developer }));
+}
+
+function paySalaries(game) {
+  const payments = game.developers.map((developer) => ({
+    developerId: developer.id,
+    developerName: developer.name,
+    amount: developer.salary ?? 0
+  }));
+  const total = sum(payments.map((payment) => payment.amount));
+
+  game.cash -= total;
+
+  return {
+    type: "salary-paid",
+    day: game.day,
+    total,
+    payments,
+    message: `Выплачена зарплата команде: ${total}.`
+  };
 }
 
 function hashSeed(seed) {

@@ -295,3 +295,15 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.flex {
+  display: flex;
+  gap: 4px;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+.flex-grow-2 {
+  flex-grow: 2;
+}

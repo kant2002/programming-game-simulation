@@ -71,7 +71,7 @@ function render() {
     </section>
 
     <section class="toolbar">
-      <button data-action="new-project">Получить новый проект</button>
+      <button data-action="new-project">Найти новый проект</button>
       ${autoRunning ? "" : `<button data-action="next-day" ${project.status !== "active" ? "disabled" : ""}>Следующий день</button>`}
       <button data-action="present" ${project.status !== "active" || summary.reportedDone === 0 ? "disabled" : ""}>
         Показать заказчику
@@ -177,10 +177,11 @@ function render() {
 
 function renderDeveloper(developer) {
   return `
-    <div class="developer">
-      <strong>${developer.name}</strong>
-      <span>скорость ${developer.speed}</span>
-      <span>надежность ${Math.round(developer.reliability * 100)}%</span>
+    <div class="developer flex">
+      <strong class="flex-grow-2">${developer.name}</strong>
+      <span class="flex-grow" title="Скорость разработки">С: ${developer.speed}</span>
+      <span class="flex-grow" title="Надежность разработки">Н: ${Math.round(developer.reliability * 100)}%</span>
+      <span class="flex-grow-2" title="Зарплата разработчика">ЗП: ${formatMoney(developer.salary ?? 0)}/мес</span>
     </div>
   `;
 }
