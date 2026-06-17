@@ -12,6 +12,6 @@
     "@it-company-game/game-core": "file:../../packages/game-core"
   },
   "devDependencies": {
-    "vite": "latest"
+    "vite": "^8.0.16"
   }
 }
